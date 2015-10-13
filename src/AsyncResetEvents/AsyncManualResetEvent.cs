@@ -28,6 +28,15 @@ namespace AsyncResetEvents
                 }
                 else
                 {
+                    // We are using only one Task per thread because we want to reuse the same Task in case Wait is called multiple
+                    // times from the same thread. This can happen if anyone does something like
+                    // 
+                    // while (IsRunning) {
+                    //   SomeCalculation();
+                    //   await Task.Delay(TimeSpan.FromSeconds(2), asyncAutoResetEvent.Wait());
+                    // }
+                    // 
+                    // But ideally WaitOne will be called only once per thread anyway.
                     int threadId = Thread.CurrentThread.ManagedThreadId;
                     if (!_threadWaiters.TryGetValue(threadId, out taskCompletionSource))
                     {

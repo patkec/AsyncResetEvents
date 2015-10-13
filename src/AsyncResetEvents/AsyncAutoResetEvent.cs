@@ -10,6 +10,15 @@ namespace AsyncResetEvents
     public sealed class AsyncAutoResetEvent
     {
         private bool _signaled;
+        // We are using a custom ThreadAffinityQueue because we want to reuse the same Task in case WaitOne is called multiple
+        // times from the same thread. This can happen if anyone does something like
+        // 
+        // while (IsRunning) {
+        //   SomeCalculation();
+        //   await Task.Delay(TimeSpan.FromSeconds(2), asyncAutoResetEvent.WaitOne());
+        // }
+        // 
+        // But ideally WaitOne will be called only once per thread anyway.
         private readonly ThreadAffinityQueue<TaskCompletionSource<object>> _waiters = new ThreadAffinityQueue<TaskCompletionSource<object>>();
 
         /// <summary>
